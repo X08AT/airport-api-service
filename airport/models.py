@@ -1,10 +1,11 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from user.models import User
 
 
 class AirplaneType(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, unique=True)
 
     class Meta:
         verbose_name = "Airplane Type"
@@ -16,12 +17,12 @@ class AirplaneType(models.Model):
 
 
 class Airplane(models.Model):
+    registration_number = models.CharField(max_length=20, unique=True)
     airplane_type = models.ForeignKey(
         AirplaneType,
         on_delete=models.CASCADE,
         related_name="airplanes"
     )
-    registration_number = models.CharField(max_length=20, unique=True)
     rows = models.PositiveIntegerField()
     seats_in_row = models.PositiveIntegerField()
 
@@ -79,6 +80,20 @@ class Flight(models.Model):
             f"({self.departure_time:%d/%m/%Y %H:%M})"
         )
 
+    def clean(self):
+        if (
+                self.departure_time
+                and self.arrival_time
+                and self.arrival_time <= self.departure_time
+        ):
+            raise ValidationError(
+                {"arrival_time": "Arrival time must be after departure time."}
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class Crew(models.Model):
     class Position(models.TextChoices):
@@ -93,7 +108,7 @@ class Crew(models.Model):
     class Meta:
         verbose_name = "Crew"
         verbose_name_plural = "Crews"
-        ordering = ("first_name", "last_name")
+        ordering = ("last_name", "first_name")
 
     @property
     def full_name(self):
@@ -114,7 +129,7 @@ class Order(models.Model):
     class Meta:
         verbose_name = "Order"
         verbose_name_plural = "Orders"
-        ordering = ("created_at",)
+        ordering = ("-created_at",)
 
     def __str__(self):
         return f"Order #{self.id} ({self.user.email})"
@@ -137,7 +152,7 @@ class Ticket(models.Model):
     class Meta:
         verbose_name = "Ticket"
         verbose_name_plural = "Tickets"
-        ordering = ("row",)
+        ordering = ("flight", "row", "seat")
         constraints = [
             models.UniqueConstraint(
                 fields=["flight", "row", "seat"],
@@ -151,6 +166,26 @@ class Ticket(models.Model):
             f"seat:{self.seat}, "
             f"flight:{self.flight.route}"
         )
+
+    def clean(self):
+        if not self.flight_id:
+            return
+
+        airplane = self.flight.airplane
+
+        if self.row > airplane.rows:
+            raise ValidationError(
+                {"row": "Invalid row number."}
+            )
+
+        if self.seat > airplane.seats_in_row:
+            raise ValidationError(
+                {"seat": "Invalid seat number."}
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Country(models.Model):
@@ -185,7 +220,7 @@ class City(models.Model):
         ]
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.country.name})"
 
 
 class Airport(models.Model):
@@ -203,7 +238,7 @@ class Airport(models.Model):
         ordering = ("city", "name")
 
     def __str__(self):
-        return f"{self.name} ({self.iata_code})"
+        return f"{self.name} ({self.iata_code}) - {self.city}"
 
 
 class Route(models.Model):
@@ -232,3 +267,17 @@ class Route(models.Model):
 
     def __str__(self):
         return f"{self.source} -> {self.destination}"
+
+    def clean(self):
+        if (
+                self.source_id
+                and self.destination_id
+                and self.source == self.destination
+        ):
+            raise ValidationError(
+                {"destination": "Source and destination must be different."}
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
