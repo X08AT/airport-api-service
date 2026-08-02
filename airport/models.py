@@ -20,7 +20,7 @@ class Airplane(models.Model):
     registration_number = models.CharField(max_length=20, unique=True)
     airplane_type = models.ForeignKey(
         AirplaneType,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="airplanes"
     )
     rows = models.PositiveIntegerField()
@@ -50,13 +50,13 @@ class Flight(models.Model):
 
     route = models.ForeignKey(
         "Route",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="flights"
     )
     flight_number = models.CharField(max_length=10, unique=True)
     airplane = models.ForeignKey(
         Airplane,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="flights"
     )
     crew = models.ManyToManyField("Crew", related_name="flights")
@@ -204,7 +204,7 @@ class City(models.Model):
     name = models.CharField(max_length=256)
     country = models.ForeignKey(
         Country,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="cities"
     )
 
@@ -227,7 +227,7 @@ class Airport(models.Model):
     name = models.CharField(max_length=256)
     city = models.ForeignKey(
         City,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="airports"
     )
     iata_code = models.CharField(max_length=3, unique=True)
@@ -244,12 +244,12 @@ class Airport(models.Model):
 class Route(models.Model):
     source = models.ForeignKey(
         Airport,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="departures"
     )
     destination = models.ForeignKey(
         Airport,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="arrivals"
     )
     distance = models.PositiveIntegerField()
