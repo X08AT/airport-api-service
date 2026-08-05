@@ -145,3 +145,29 @@ class RouteViewSet(viewsets.ModelViewSet):
             return RouteDetailSerializer
 
         return RouteSerializer
+
+
+class FlightViewSet(viewsets.ModelViewSet):
+    queryset = Flight.objects.all()
+    serializer_class = FlightSerializer
+
+    def get_queryset(self):
+        queryset = Flight.objects.all()
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.select_related(
+                "route__source__city__country",
+                "route__destination__city__country",
+                "airplane__airplane_type"
+            ).prefetch_related("crew")
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return FlightListSerializer
+        if self.action == "retrieve":
+            return FlightDetailSerializer
+
+        return FlightSerializer
+
