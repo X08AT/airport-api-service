@@ -1,5 +1,6 @@
 from django.db.models import Prefetch, Count, F
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
 from airport.models import (
     AirplaneType,
@@ -13,6 +14,7 @@ from airport.models import (
     Order,
     Ticket
 )
+from airport.permissions import IsAdminOrIfAuthenticatedReadOnly
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -42,11 +44,13 @@ from airport.serializers import (
 class AirplaneTypeViewSet(viewsets.ModelViewSet):
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
     serializer_class = AirplaneSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         airplane_type = self.request.query_params.get("airplane_type")
@@ -77,6 +81,7 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         position = self.request.query_params.get("position")
@@ -98,11 +103,13 @@ class CrewViewSet(viewsets.ModelViewSet):
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         country = self.request.query_params.get("country")
@@ -132,6 +139,7 @@ class CityViewSet(viewsets.ModelViewSet):
 class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         city = self.request.query_params.get("city")
@@ -159,6 +167,7 @@ class AirportViewSet(viewsets.ModelViewSet):
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         source = self.request.query_params.get("source")
@@ -197,6 +206,7 @@ class RouteViewSet(viewsets.ModelViewSet):
 class FlightViewSet(viewsets.ModelViewSet):
     queryset = Flight.objects.all()
     serializer_class = FlightSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         status = self.request.query_params.get("status")
@@ -230,7 +240,7 @@ class FlightViewSet(viewsets.ModelViewSet):
                 "route__source__city__country",
                 "route__destination__city__country",
                 "airplane__airplane_type"
-            ).prefetch_related("crew")
+            ).prefetch_related("crew", "tickets")
 
         return queryset
 
@@ -246,6 +256,7 @@ class FlightViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         queryset = Order.objects.filter(user=self.request.user)
