@@ -17,7 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from airport_api_service import settings
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/user/", include("user.urls", namespace="user")),
+    path("api/airport/", include("airport.urls", namespace="airport")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [
+        path("__debug__/", include("debug_toolbar.urls")),
+    ]
