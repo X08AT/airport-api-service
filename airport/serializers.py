@@ -125,3 +125,25 @@ class AirportDetailSerializer(AirportSerializer):
     class Meta(AirportSerializer.Meta):
         fields = ("id", "name", "city", "iata_code")
 
+
+class RouteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Route
+        fields = ("id", "source", "destination", "distance")
+
+
+class RouteListSerializer(RouteSerializer):
+    source = serializers.StringRelatedField(read_only=True)
+    destination = serializers.StringRelatedField(read_only=True)
+
+    class Meta(RouteSerializer.Meta):
+        fields = ("id", "source", "destination", "distance")
+
+
+class RouteDetailSerializer(RouteSerializer):
+    source = AirportDetailSerializer(read_only=True)
+    destination = AirportDetailSerializer(read_only=True)
+
+    class Meta(RouteSerializer.Meta):
+        fields = ("id", "source", "destination", "distance")
+
