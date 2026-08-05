@@ -131,6 +131,23 @@ class RouteSerializer(serializers.ModelSerializer):
         model = Route
         fields = ("id", "source", "destination", "distance")
 
+    def validate(self, attrs):
+        source = attrs.get("source", getattr(self.instance, "source", None))
+        destination = attrs.get(
+            "destination",
+            getattr(
+                self.instance,
+                "destination",
+                None
+            )
+        )
+        if source and destination and source == destination:
+            raise serializers.ValidationError(
+                "Source and destination must be different."
+            )
+
+        return attrs
+
 
 class RouteListSerializer(RouteSerializer):
     source = serializers.StringRelatedField(read_only=True)
@@ -161,6 +178,31 @@ class FlightSerializer(serializers.ModelSerializer):
             "arrival_time",
             "status"
         )
+
+    def validate(self, attrs):
+        departure = attrs.get(
+            "departure_time",
+            getattr(
+                self.instance,
+                "departure_time",
+                None
+            )
+        )
+        arrival = attrs.get(
+            "arrival_time",
+            getattr(
+                self.instance,
+                "arrival_time",
+                None
+            )
+        )
+
+        if departure and arrival and arrival <= departure:
+            raise serializers.ValidationError(
+                "Arrival time must be after departure time."
+            )
+
+        return attrs
 
 
 class FlightListSerializer(FlightSerializer):
@@ -220,6 +262,39 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("id", "row", "seat", "flight")
 
+    def validate(self, attrs):
+        flight = attrs.get("flight", getattr(self.instance, "flight", None))
+        row = attrs.get("row", getattr(self.instance, "row", None))
+        seat = attrs.get("seat", getattr(self.instance, "seat", None))
+
+        if not flight or row is None or seat is None:
+            return attrs
+
+        airplane = flight.airplane
+
+        if row > airplane.rows:
+            raise serializers.ValidationError(
+                {"row": "Invalid row number."}
+            )
+        if seat > airplane.seats_in_row:
+            raise serializers.ValidationError(
+                {"seat": "Invalid seat number."}
+            )
+        tickets = Ticket.objects.filter(
+            flight=flight,
+            row=row,
+            seat=seat,
+        )
+
+        if self.instance:
+            tickets = tickets.exclude(id=self.instance.id)
+
+        if tickets.exists():
+            raise serializers.ValidationError(
+                "This seat is already taken."
+            )
+        return attrs
+
 
 class TicketListSerializer(TicketSerializer):
     flight = serializers.StringRelatedField(read_only=True)
@@ -261,7 +336,7 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         with transaction.atomic():
             tickets = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
+            order = Order.objects.create(user=self.context["request"].user)
             for ticket in tickets:
                 Ticket.objects.create(order=order, **ticket)
             return order
