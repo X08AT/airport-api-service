@@ -104,3 +104,24 @@ class CityDetailSerializer(CitySerializer):
 
     class Meta(CitySerializer.Meta):
         fields = ("id", "name", "country")
+
+
+class AirportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Airport
+        fields = ("id", "name", "city", "iata_code")
+
+
+class AirportListSerializer(AirportSerializer):
+    city = serializers.StringRelatedField(read_only=True)
+
+    class Meta(AirportSerializer.Meta):
+        fields = ("id", "name", "city", "iata_code")
+
+
+class AirportDetailSerializer(AirportSerializer):
+    city = CityDetailSerializer(read_only=True)
+
+    class Meta(AirportSerializer.Meta):
+        fields = ("id", "name", "city", "iata_code")
+
