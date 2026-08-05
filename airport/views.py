@@ -1,7 +1,10 @@
 from django.db.models import Prefetch, Count, F
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 
+from airport.filters import FlightFilter
 from airport.models import (
     AirplaneType,
     Airplane,
@@ -46,23 +49,31 @@ class AirplaneTypeViewSet(viewsets.ModelViewSet):
     serializer_class = AirplaneTypeSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    filter_backends = (
+        SearchFilter,
+        OrderingFilter,
+    )
+
+    search_fields = ("name",)
+    ordering_fields = ("name",)
+
 
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
     serializer_class = AirplaneSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    filter_backends = (
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    )
+    filterset_fields = ("airplane_type",)
+    search_fields = ("registration_number",)
+    ordering_fields = ("registration_number",)
+
     def get_queryset(self):
-        airplane_type = self.request.query_params.get("airplane_type")
-
-        queryset = Airplane.objects.all()
-
-        if airplane_type:
-            airplane_type_ids = [
-                int(airplane_type_id)
-                for airplane_type_id in airplane_type.split(",")
-            ]
-            queryset = queryset.filter(airplane_type_id__in=airplane_type_ids)
+        queryset = self.queryset
 
         if self.action in ("list", "retrieve"):
             return queryset.select_related("airplane_type")
@@ -83,15 +94,14 @@ class CrewViewSet(viewsets.ModelViewSet):
     serializer_class = CrewSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
-    def get_queryset(self):
-        position = self.request.query_params.get("position")
-
-        queryset = Crew.objects.all()
-
-        if position:
-            queryset = queryset.filter(position=position)
-
-        return queryset
+    filter_backends = (
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    )
+    filterset_fields = ("position",)
+    search_fields = ("first_name", "last_name",)
+    ordering_fields = ("last_name", "first_name",)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -105,22 +115,31 @@ class CountryViewSet(viewsets.ModelViewSet):
     serializer_class = CountrySerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    filter_backends = (
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    )
+    search_fields = ("name",)
+    ordering_fields = ("name",)
+
 
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    filter_backends = (
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    )
+    filterset_fields = ("country",)
+    search_fields = ("name",)
+    ordering_fields = ("name",)
+
     def get_queryset(self):
-        country = self.request.query_params.get("country")
-
-        queryset = City.objects.all()
-
-        if country:
-            country_ids = [
-                int(country_id) for country_id in country.split(",")
-            ]
-            queryset = queryset.filter(country_id__in=country_ids)
+        queryset = self.queryset
 
         if self.action in ("list", "retrieve"):
             return queryset.select_related("country")
@@ -141,14 +160,17 @@ class AirportViewSet(viewsets.ModelViewSet):
     serializer_class = AirportSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    filter_backends = (
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    )
+    filterset_fields = ("city",)
+    search_fields = ("name", "iata_code", "city__name")
+    ordering_fields = ("name",)
+
     def get_queryset(self):
-        city = self.request.query_params.get("city")
-
-        queryset = Airport.objects.all()
-
-        if city:
-            city_ids = [int(city_id) for city_id in city.split(",")]
-            queryset = queryset.filter(city_id__in=city_ids)
+        queryset = self.queryset
 
         if self.action in ("list", "retrieve"):
             return queryset.select_related("city", "city__country")
@@ -169,22 +191,22 @@ class RouteViewSet(viewsets.ModelViewSet):
     serializer_class = RouteSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    filter_backends = (
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    )
+    filterset_fields = ("source", "destination")
+    search_fields = (
+        "source__city__name",
+        "destination__city__name",
+        "source__iata_code",
+        "destination__iata_code",
+    )
+    ordering_fields = ("distance",)
+
     def get_queryset(self):
-        source = self.request.query_params.get("source")
-        destination = self.request.query_params.get("destination")
-
-        queryset = Route.objects.all()
-
-        if source:
-            source_ids = [int(source_id) for source_id in source.split(",")]
-            queryset = queryset.filter(source_id__in=source_ids)
-
-        if destination:
-            destination_ids = [
-                int(destination_id)
-                for destination_id in destination.split(",")
-            ]
-            queryset = queryset.filter(destination_id__in=destination_ids)
+        queryset = self.queryset
 
         if self.action in ("list", "retrieve"):
             return queryset.select_related(
@@ -208,39 +230,37 @@ class FlightViewSet(viewsets.ModelViewSet):
     serializer_class = FlightSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    filter_backends = (
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    )
+    filterset_class = FlightFilter
+    search_fields = (
+        "flight_number",
+        "route__source__iata_code",
+        "route__destination__iata_code"
+    )
+    ordering_fields = (
+        "departure_time",
+        "arrival_time",
+    )
+
     def get_queryset(self):
-        status = self.request.query_params.get("status")
-        route = self.request.query_params.get("route")
-        airplane = self.request.query_params.get("airplane")
-
-        queryset = Flight.objects.all()
-
-        queryset = queryset.annotate(
-            available_seats=(
-                F("airplane__rows") * F("airplane__seats_in_row")
-                - Count("tickets")
-            )
-        )
-
-        if status:
-            queryset = queryset.filter(status=status)
-
-        if route:
-            route_ids = [int(route_id) for route_id in route.split(",")]
-            queryset = queryset.filter(route_id__in=route_ids)
-
-        if airplane:
-            airplane_ids = [
-                int(airplane_id) for airplane_id in airplane.split(",")
-            ]
-            queryset = queryset.filter(airplane_id__in=airplane_ids)
+        queryset = self.queryset
 
         if self.action in ("list", "retrieve"):
+            queryset = queryset.annotate(
+                available_seats=(
+                        F("airplane__rows") * F("airplane__seats_in_row")
+                        - Count("tickets")
+                )
+            )
             queryset = queryset.select_related(
                 "route__source__city__country",
                 "route__destination__city__country",
                 "airplane__airplane_type"
-            ).prefetch_related("crew", "tickets")
+            ).prefetch_related("crew")
 
         return queryset
 
@@ -258,8 +278,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
 
+    filter_backends = (OrderingFilter,)
+    ordering_fields = ("created_at",)
+
     def get_queryset(self):
-        queryset = Order.objects.filter(user=self.request.user)
+        queryset = self.queryset.filter(user=self.request.user)
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related(
