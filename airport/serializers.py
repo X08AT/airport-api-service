@@ -65,3 +65,16 @@ class AirplaneDetailSerializer(AirplaneSerializer):
             "seats_in_row",
             "capacity"
         )
+
+
+class CrewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Crew
+        fields = ("id", "first_name", "last_name", "position")
+
+
+class CrewListSerializer(CrewSerializer):
+    full_name = serializers.ReadOnlyField()
+
+    class Meta(CrewSerializer.Meta):
+        fields = ("id", "full_name", "position")
