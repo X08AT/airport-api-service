@@ -64,3 +64,14 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 
         return AirplaneSerializer
 
+
+class CrewViewSet(viewsets.ModelViewSet):
+    queryset = Crew.objects.all()
+    serializer_class = CrewSerializer
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CrewListSerializer
+
+        return CrewSerializer
+
