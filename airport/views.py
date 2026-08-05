@@ -1,4 +1,4 @@
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count, F
 from rest_framework import viewsets
 
 from airport.models import (
@@ -204,6 +204,13 @@ class FlightViewSet(viewsets.ModelViewSet):
         airplane = self.request.query_params.get("airplane")
 
         queryset = Flight.objects.all()
+
+        queryset = queryset.annotate(
+            available_seats=(
+                F("airplane__rows") * F("airplane__seats_in_row")
+                - Count("tickets")
+            )
+        )
 
         if status:
             queryset = queryset.filter(status=status)
