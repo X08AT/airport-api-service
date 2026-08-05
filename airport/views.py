@@ -75,3 +75,29 @@ class CrewViewSet(viewsets.ModelViewSet):
 
         return CrewSerializer
 
+
+class CountryViewSet(viewsets.ModelViewSet):
+    queryset = Country.objects.all()
+    serializer_class = CountrySerializer
+
+
+class CityViewSet(viewsets.ModelViewSet):
+    queryset = City.objects.all()
+    serializer_class = CitySerializer
+
+    def get_queryset(self):
+        queryset = City.objects.all()
+
+        if self.action in ("list", "retrieve"):
+            return queryset.select_related("country")
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CityListSerializer
+        if self.action == "retrieve":
+            return CityDetailSerializer
+
+        return CitySerializer
+
