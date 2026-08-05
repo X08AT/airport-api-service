@@ -198,3 +198,69 @@ class FlightDetailSerializer(FlightSerializer):
             "status"
         )
 
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "flight")
+
+
+class TicketListSerializer(TicketSerializer):
+    flight = serializers.StringRelatedField(read_only=True)
+
+    class Meta(TicketSerializer.Meta):
+        fields = ("id", "row", "seat", "flight")
+
+
+class FlightTicketSerializer(FlightSerializer):
+    route = serializers.StringRelatedField(read_only=True)
+    airplane = serializers.StringRelatedField(read_only=True)
+
+    class Meta(FlightSerializer.Meta):
+        fields = (
+            "id",
+            "route",
+            "flight_number",
+            "airplane",
+            "departure_time",
+            "arrival_time",
+            "status"
+        )
+
+
+class TicketDetailSerializer(TicketSerializer):
+    flight = FlightTicketSerializer(read_only=True)
+
+    class Meta(TicketSerializer.Meta):
+        fields = ("id", "row", "seat", "flight")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = ("id", "created_at", "tickets")
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets = validated_data.pop("tickets")
+            order = Order.objects.create(**validated_data)
+            for ticket in tickets:
+                Ticket.objects.create(order=order, **ticket)
+            return order
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
+
+    class Meta(OrderSerializer.Meta):
+        model = Order
+        fields = ("id", "created_at", "tickets")
+
+
+class OrderDetailSerializer(OrderSerializer):
+    tickets = TicketDetailSerializer(many=True, read_only=True)
+
+    class Meta(OrderSerializer.Meta):
+        fields = ("id", "created_at", "tickets")
