@@ -87,7 +87,10 @@ class RouteAdmin(admin.ModelAdmin):
     list_display = ["source", "destination", "distance"]
     list_filter = ["source", "destination"]
     search_fields = ["source__name", "destination__name"]
-    list_select_related = ["source", "destination"]
+    list_select_related = [
+        "source__city__country",
+        "destination__city__country"
+    ]
 
 
 @admin.register(Flight)
@@ -109,9 +112,9 @@ class FlightAdmin(admin.ModelAdmin):
         "airplane__registration_number",
     ]
     list_select_related = [
-        "airplane",
-        "route__source",
-        "route__destination",
+        "airplane__airplane_type",
+        "route__source__city__country",
+        "route__destination__city__country",
     ]
     list_editable = ["status"]
 
@@ -128,5 +131,10 @@ class FlightAdmin(admin.ModelAdmin):
 class TicketAdmin(admin.ModelAdmin):
     list_display = ["row", "seat", "flight", "order"]
     list_filter = ["flight", "order"]
-    list_select_related = ["flight", "order"]
+    list_select_related = [
+        "order__user",
+        "flight__route__source__city__country",
+        "flight__route__destination__city__country",
+        "flight__airplane__airplane_type"
+    ]
     search_fields = ["flight__flight_number", "order__user__email"]
