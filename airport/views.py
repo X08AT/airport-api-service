@@ -101,3 +101,24 @@ class CityViewSet(viewsets.ModelViewSet):
 
         return CitySerializer
 
+
+class AirportViewSet(viewsets.ModelViewSet):
+    queryset = Airport.objects.all()
+    serializer_class = AirportSerializer
+
+    def get_queryset(self):
+        queryset = Airport.objects.all()
+
+        if self.action in ("list", "retrieve"):
+            return queryset.select_related("city", "city__country")
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return AirportListSerializer
+        if self.action == "retrieve":
+            return AirportDetailSerializer
+
+        return AirportSerializer
+
