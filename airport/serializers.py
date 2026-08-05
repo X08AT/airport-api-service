@@ -78,3 +78,29 @@ class CrewListSerializer(CrewSerializer):
 
     class Meta(CrewSerializer.Meta):
         fields = ("id", "full_name", "position")
+
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = ("id", "name")
+
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = ("id", "name", "country")
+
+
+class CityListSerializer(CitySerializer):
+    country = serializers.CharField(source="country.name", read_only=True)
+
+    class Meta(CitySerializer.Meta):
+        fields = ("id", "name", "country")
+
+
+class CityDetailSerializer(CitySerializer):
+    country = CountrySerializer(read_only=True)
+
+    class Meta(CitySerializer.Meta):
+        fields = ("id", "name", "country")
