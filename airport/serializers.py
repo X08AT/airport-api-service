@@ -147,3 +147,54 @@ class RouteDetailSerializer(RouteSerializer):
     class Meta(RouteSerializer.Meta):
         fields = ("id", "source", "destination", "distance")
 
+
+class FlightSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Flight
+        fields = (
+            "id",
+            "route",
+            "flight_number",
+            "airplane",
+            "crew",
+            "departure_time",
+            "arrival_time",
+            "status"
+        )
+
+
+class FlightListSerializer(FlightSerializer):
+    route = serializers.StringRelatedField(read_only=True)
+    airplane = serializers.StringRelatedField(read_only=True)
+    crew = CrewListSerializer(many=True, read_only=True)
+
+    class Meta(FlightSerializer.Meta):
+        fields = (
+            "id",
+            "route",
+            "flight_number",
+            "airplane",
+            "crew",
+            "departure_time",
+            "arrival_time",
+            "status"
+        )
+
+
+class FlightDetailSerializer(FlightSerializer):
+    route = RouteDetailSerializer(read_only=True)
+    airplane = AirplaneDetailSerializer(read_only=True)
+    crew = CrewSerializer(many=True, read_only=True)
+
+    class Meta(FlightSerializer.Meta):
+        fields = (
+            "id",
+            "route",
+            "flight_number",
+            "airplane",
+            "crew",
+            "departure_time",
+            "arrival_time",
+            "status"
+        )
+
