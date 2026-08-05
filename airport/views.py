@@ -122,3 +122,26 @@ class AirportViewSet(viewsets.ModelViewSet):
 
         return AirportSerializer
 
+
+class RouteViewSet(viewsets.ModelViewSet):
+    queryset = Route.objects.all()
+    serializer_class = RouteSerializer
+
+    def get_queryset(self):
+        queryset = Route.objects.all()
+
+        if self.action in ("list", "retrieve"):
+            return queryset.select_related(
+                "source__city__country",
+                "destination__city__country"
+            )
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return RouteListSerializer
+        if self.action == "retrieve":
+            return RouteDetailSerializer
+
+        return RouteSerializer
