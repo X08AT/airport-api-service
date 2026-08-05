@@ -171,3 +171,35 @@ class FlightViewSet(viewsets.ModelViewSet):
 
         return FlightSerializer
 
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        queryset = Order.objects.filter(user=self.request.user)
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    "tickets",
+                    queryset=Ticket.objects.select_related(
+                        "flight__route__source__city__country",
+                        "flight__route__destination__city__country",
+                        "flight__airplane__airplane_type",
+                    )
+                )
+            )
+
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+        if self.action == "retrieve":
+            return OrderDetailSerializer
+
+        return OrderSerializer
