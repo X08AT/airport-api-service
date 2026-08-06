@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "rest_framework",
     "django_filters",
+    "drf_spectacular",
     "airport",
     "user",
 ]
@@ -145,6 +146,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -158,4 +160,10 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Airport API",
+    "VERSION": "1.0.0",
+    "COMPONENT_SPLIT_REQUEST": True,
 }

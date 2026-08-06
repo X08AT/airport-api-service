@@ -1,12 +1,14 @@
 from django.db.models import Prefetch, Count, F
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, status
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from airport.filters import FlightFilter
+from airport.mixins import ImageUploadMixin
 from airport.models import (
     AirplaneType,
     Airplane,
@@ -43,11 +45,23 @@ from airport.serializers import (
     OrderSerializer,
     OrderListSerializer,
     OrderDetailSerializer,
-    AirplaneImageSerializer, CountryImageSerializer, CountryListAndRetrieveSerializer, CityImageSerializer,
+    AirplaneImageSerializer,
+    CountryImageSerializer,
+    CountryListAndRetrieveSerializer,
+    CityImageSerializer,
     AirportImageSerializer
 )
 
 
+@extend_schema_view(
+    list=extend_schema(summary="List of airplane types"),
+    retrieve=extend_schema(summary="Retrieve airplane type"),
+    create=extend_schema(summary="Create airplane type"),
+    update=extend_schema(summary="Update airplane type"),
+    partial_update=extend_schema(summary="Partially update airplane type"),
+    destroy=extend_schema(summary="Delete airplane type"),
+)
+@extend_schema(tags=["Airplane Types"])
 class AirplaneTypeViewSet(viewsets.ModelViewSet):
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
@@ -62,7 +76,22 @@ class AirplaneTypeViewSet(viewsets.ModelViewSet):
     ordering_fields = ("name",)
 
 
-class AirplaneViewSet(viewsets.ModelViewSet):
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of airplanes",
+        description=(
+            "Supports filtering by airplane type, searching by registration "
+            "number, and ordering by registration number."
+        ),
+    ),
+    retrieve=extend_schema(summary="Retrieve airplane"),
+    create=extend_schema(summary="Create airplane"),
+    update=extend_schema(summary="Update airplane"),
+    partial_update=extend_schema(summary="Partially update airplane"),
+    destroy=extend_schema(summary="Delete airplane"),
+)
+@extend_schema(tags=["Airplanes"])
+class AirplaneViewSet(ImageUploadMixin, viewsets.ModelViewSet):
     queryset = Airplane.objects.all()
     serializer_class = AirplaneSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -94,21 +123,31 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 
         return AirplaneSerializer
 
+    @extend_schema(
+        summary="Upload airplane image",
+        description="Upload or replace an image for airplane.",
+        request=AirplaneImageSerializer,
+        responses=AirplaneImageSerializer,
+    )
     @action(
         methods=["post"],
         detail=True,
-        url_path="upload-image"
+        url_path="upload-image",
+        parser_classes=(MultiPartParser,)
     )
     def upload_image(self, request, pk=None):
-        airplane = self.get_object()
-        serializer = self.get_serializer(airplane, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().upload_image(request, pk)
 
 
+@extend_schema_view(
+    list=extend_schema(summary="List of crew members"),
+    retrieve=extend_schema(summary="Retrieve crew member"),
+    create=extend_schema(summary="Create crew member"),
+    update=extend_schema(summary="Update crew member"),
+    partial_update=extend_schema(summary="Partially update crew member"),
+    destroy=extend_schema(summary="Delete crew member"),
+)
+@extend_schema(tags=["Crews"])
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
@@ -130,7 +169,16 @@ class CrewViewSet(viewsets.ModelViewSet):
         return CrewSerializer
 
 
-class CountryViewSet(viewsets.ModelViewSet):
+@extend_schema_view(
+    list=extend_schema(summary="List of countries"),
+    retrieve=extend_schema(summary="Retrieve country"),
+    create=extend_schema(summary="Create country"),
+    update=extend_schema(summary="Update country"),
+    partial_update=extend_schema(summary="Partially update country"),
+    destroy=extend_schema(summary="Delete country"),
+)
+@extend_schema(tags=["Countries"])
+class CountryViewSet(ImageUploadMixin, viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -151,22 +199,38 @@ class CountryViewSet(viewsets.ModelViewSet):
 
         return CountrySerializer
 
+    @extend_schema(
+        summary="Upload country flag image",
+        description="Upload or replace an flag image for country.",
+        request=CountryImageSerializer,
+        responses=CountryImageSerializer,
+    )
     @action(
         methods=["post"],
         detail=True,
-        url_path="upload-image"
+        url_path="upload-image",
+        parser_classes=(MultiPartParser,)
     )
     def upload_image(self, request, pk=None):
-        country = self.get_object()
-        serializer = self.get_serializer(country, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().upload_image(request, pk)
 
 
-class CityViewSet(viewsets.ModelViewSet):
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of cities",
+        description=(
+            "Supports filtering by country, searching by city name, "
+            "and ordering by city name."
+        ),
+    ),
+    retrieve=extend_schema(summary="Retrieve city"),
+    create=extend_schema(summary="Create city"),
+    update=extend_schema(summary="Update city"),
+    partial_update=extend_schema(summary="Partially update city"),
+    destroy=extend_schema(summary="Delete city"),
+)
+@extend_schema(tags=["Cities"])
+class CityViewSet(ImageUploadMixin, viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -198,22 +262,38 @@ class CityViewSet(viewsets.ModelViewSet):
 
         return CitySerializer
 
+    @extend_schema(
+        summary="Upload city image",
+        description="Upload or replace an image for city.",
+        request=CityImageSerializer,
+        responses=CityImageSerializer,
+    )
     @action(
         methods=["post"],
         detail=True,
-        url_path="upload-image"
+        url_path="upload-image",
+        parser_classes=(MultiPartParser,)
     )
     def upload_image(self, request, pk=None):
-        city = self.get_object()
-        serializer = self.get_serializer(city, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().upload_image(request, pk)
 
 
-class AirportViewSet(viewsets.ModelViewSet):
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of airports",
+        description=(
+            "Supports filtering by city, searching by airport name, IATA code "
+            "or city name, and ordering by airport name."
+        ),
+    ),
+    retrieve=extend_schema(summary="Retrieve airport"),
+    create=extend_schema(summary="Create airport"),
+    update=extend_schema(summary="Update airport"),
+    partial_update=extend_schema(summary="Partially update airport"),
+    destroy=extend_schema(summary="Delete airport"),
+)
+@extend_schema(tags=["Airports"])
+class AirportViewSet(ImageUploadMixin, viewsets.ModelViewSet):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -245,20 +325,38 @@ class AirportViewSet(viewsets.ModelViewSet):
 
         return AirportSerializer
 
+    @extend_schema(
+        summary="Upload airport image",
+        description="Upload or replace an image for airport.",
+        request=AirportImageSerializer,
+        responses=AirportImageSerializer,
+    )
     @action(
         methods=["post"],
         detail=True,
-        url_path="upload-image"
+        url_path="upload-image",
+        parser_classes=(MultiPartParser,)
     )
     def upload_image(self, request, pk=None):
-        city = self.get_object()
-        serializer = self.get_serializer(city, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().upload_image(request, pk)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of routes",
+        description=(
+            "Supports filtering by source and destination airports, "
+            "searching by airport IATA code or city name, "
+            "and ordering by distance."
+        ),
+    ),
+    retrieve=extend_schema(summary="Retrieve route"),
+    create=extend_schema(summary="Create route"),
+    update=extend_schema(summary="Update route"),
+    partial_update=extend_schema(summary="Partially update route"),
+    destroy=extend_schema(summary="Delete route"),
+)
+@extend_schema(tags=["Routes"])
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
@@ -298,6 +396,29 @@ class RouteViewSet(viewsets.ModelViewSet):
         return RouteSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of flights",
+        description=(
+            "Retrieve a list of flights. "
+            "Supports filtering by departure date, "
+            "route, crew, and airplane,"
+            " searching by flight number and airport "
+            "IATA codes, and ordering by departure or arrival time."
+        ),
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve flight",
+        description=(
+            "Retrieve detailed flight information, including available seats."
+        ),
+    ),
+    create=extend_schema(summary="Create flight"),
+    update=extend_schema(summary="Update flight"),
+    partial_update=extend_schema(summary="Partially update flight"),
+    destroy=extend_schema(summary="Delete flight"),
+)
+@extend_schema(tags=["Flights"])
 class FlightViewSet(viewsets.ModelViewSet):
     queryset = Flight.objects.all()
     serializer_class = FlightSerializer
@@ -346,6 +467,26 @@ class FlightViewSet(viewsets.ModelViewSet):
         return FlightSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of orders",
+        description="Retrieve a list of orders"
+                    " created by the authenticated user.",
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve order",
+        description="Retrieve detailed information about an"
+                    " order belonging to the authenticated user.",
+    ),
+    create=extend_schema(
+        summary="Create order",
+        description="Create a new order for the authenticated user.",
+    ),
+    update=extend_schema(summary="Update order"),
+    partial_update=extend_schema(summary="Partially update order"),
+    destroy=extend_schema(summary="Delete order"),
+)
+@extend_schema(tags=["Orders"])
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
