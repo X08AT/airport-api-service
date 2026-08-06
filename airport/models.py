@@ -80,15 +80,21 @@ class Flight(models.Model):
             f"({self.departure_time:%d/%m/%Y %H:%M})"
         )
 
-    def clean(self):
+    def validate_schedule(self):
         if (
                 self.departure_time
                 and self.arrival_time
                 and self.arrival_time <= self.departure_time
         ):
             raise ValidationError(
-                {"arrival_time": "Arrival time must be after departure time."}
+                {
+                    "arrival_time":
+                        "Arrival time must be after departure time."
+                }
             )
+
+    def clean(self):
+        self.validate_schedule()
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -167,21 +173,24 @@ class Ticket(models.Model):
             f"flight:{self.flight.route}"
         )
 
-    def clean(self):
+    def validate_position(self):
         if not self.flight_id:
             return
 
         airplane = self.flight.airplane
 
-        if self.row > airplane.rows:
+        if self.row > airplane.rows or self.row < 1:
             raise ValidationError(
                 {"row": "Invalid row number."}
             )
 
-        if self.seat > airplane.seats_in_row:
+        if self.seat > airplane.seats_in_row or self.seat < 1:
             raise ValidationError(
                 {"seat": "Invalid seat number."}
             )
+
+    def clean(self):
+        self.validate_position()
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -268,7 +277,7 @@ class Route(models.Model):
     def __str__(self):
         return f"{self.source} -> {self.destination}"
 
-    def clean(self):
+    def validate_airports(self):
         if (
                 self.source_id
                 and self.destination_id
@@ -277,6 +286,9 @@ class Route(models.Model):
             raise ValidationError(
                 {"destination": "Source and destination must be different."}
             )
+
+    def clean(self):
+        self.validate_airports()
 
     def save(self, *args, **kwargs):
         self.full_clean()
