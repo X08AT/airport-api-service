@@ -25,7 +25,11 @@ class Airplane(models.Model):
     )
     rows = models.PositiveIntegerField()
     seats_in_row = models.PositiveIntegerField()
-    airplane_image = models.ImageField(null=True, blank=True, upload_to="airplanes/")
+    airplane_image = models.ImageField(
+        null=True,
+        blank=True,
+        upload_to="airplanes/"
+    )
 
     class Meta:
         verbose_name = "Airplane"
@@ -243,7 +247,11 @@ class Airport(models.Model):
         related_name="airports"
     )
     iata_code = models.CharField(max_length=3, unique=True)
-    airport_image = models.ImageField(null=True, blank=True, upload_to="airports/")
+    airport_image = models.ImageField(
+        null=True,
+        blank=True,
+        upload_to="airports/"
+    )
 
     class Meta:
         verbose_name = "Airport"
