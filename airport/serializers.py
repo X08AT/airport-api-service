@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import serializers
 
@@ -132,19 +133,22 @@ class RouteSerializer(serializers.ModelSerializer):
         fields = ("id", "source", "destination", "distance")
 
     def validate(self, attrs):
-        source = attrs.get("source", getattr(self.instance, "source", None))
+        source = attrs.get(
+            "source",
+            getattr(self.instance, "source", None)
+        )
         destination = attrs.get(
             "destination",
-            getattr(
-                self.instance,
-                "destination",
-                None
-            )
+            getattr(self.instance, "destination", None)
         )
-        if source and destination and source == destination:
-            raise serializers.ValidationError(
-                "Source and destination must be different."
-            )
+        route = Route(
+            source=source,
+            destination=destination,
+        )
+        try:
+            route.validate_airports()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
 
         return attrs
 
@@ -182,25 +186,20 @@ class FlightSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         departure = attrs.get(
             "departure_time",
-            getattr(
-                self.instance,
-                "departure_time",
-                None
-            )
+            getattr(self.instance, "departure_time", None)
         )
         arrival = attrs.get(
             "arrival_time",
-            getattr(
-                self.instance,
-                "arrival_time",
-                None
-            )
+            getattr(self.instance, "arrival_time", None)
         )
-
-        if departure and arrival and arrival <= departure:
-            raise serializers.ValidationError(
-                "Arrival time must be after departure time."
-            )
+        flight = Flight(
+            departure_time=departure,
+            arrival_time=arrival,
+        )
+        try:
+            flight.validate_schedule()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
 
         return attrs
 
@@ -263,36 +262,44 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "row", "seat", "flight")
 
     def validate(self, attrs):
-        flight = attrs.get("flight", getattr(self.instance, "flight", None))
-        row = attrs.get("row", getattr(self.instance, "row", None))
-        seat = attrs.get("seat", getattr(self.instance, "seat", None))
-
-        if not flight or row is None or seat is None:
-            return attrs
-
-        airplane = flight.airplane
-
-        if row > airplane.rows:
-            raise serializers.ValidationError(
-                {"row": "Invalid row number."}
-            )
-        if seat > airplane.seats_in_row:
-            raise serializers.ValidationError(
-                {"seat": "Invalid seat number."}
-            )
-        tickets = Ticket.objects.filter(
+        flight = attrs.get(
+            "flight",
+            getattr(self.instance, "flight", None)
+        )
+        row = attrs.get(
+            "row",
+            getattr(self.instance, "row", None)
+        )
+        seat = attrs.get(
+            "seat",
+            getattr(self.instance, "seat", None)
+        )
+        ticket = Ticket(
             flight=flight,
             row=row,
             seat=seat,
         )
+        try:
+            ticket.validate_position()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
+        tickets = Ticket.objects.filter(
+            flight=flight,
+            row=row,
+            seat=seat
+        )
 
         if self.instance:
-            tickets = tickets.exclude(id=self.instance.id)
+            tickets = tickets.exclude(pk=self.instance.pk)
 
         if tickets.exists():
             raise serializers.ValidationError(
-                "This seat is already taken."
+                {
+                    "seat": "This seat is already taken."
+                }
             )
+
         return attrs
 
 
