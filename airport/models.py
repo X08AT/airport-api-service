@@ -25,6 +25,7 @@ class Airplane(models.Model):
     )
     rows = models.PositiveIntegerField()
     seats_in_row = models.PositiveIntegerField()
+    airplane_image = models.ImageField(null=True, blank=True, upload_to="airplanes/")
 
     class Meta:
         verbose_name = "Airplane"
@@ -199,6 +200,7 @@ class Ticket(models.Model):
 
 class Country(models.Model):
     name = models.CharField(max_length=256, unique=True)
+    country_flag = models.ImageField(null=True, blank=True, upload_to="flags/")
 
     class Meta:
         verbose_name = "Country"
@@ -216,6 +218,7 @@ class City(models.Model):
         on_delete=models.PROTECT,
         related_name="cities"
     )
+    city_image = models.ImageField(null=True, blank=True, upload_to="cities/")
 
     class Meta:
         verbose_name = "City"
@@ -240,6 +243,7 @@ class Airport(models.Model):
         related_name="airports"
     )
     iata_code = models.CharField(max_length=3, unique=True)
+    airport_image = models.ImageField(null=True, blank=True, upload_to="airports/")
 
     class Meta:
         verbose_name = "Airport"

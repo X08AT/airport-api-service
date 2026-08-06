@@ -22,6 +22,12 @@ class AirplaneTypeSerializer(serializers.ModelSerializer):
         fields = ("id", "name",)
 
 
+class AirplaneImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Airplane
+        fields = ("id", "airplane_image",)
+
+
 class AirplaneSerializer(serializers.ModelSerializer):
     capacity = serializers.ReadOnlyField()
 
@@ -50,7 +56,8 @@ class AirplaneListSerializer(AirplaneSerializer):
             "airplane_type",
             "rows",
             "seats_in_row",
-            "capacity"
+            "capacity",
+            "airplane_image"
         )
 
 
@@ -64,7 +71,8 @@ class AirplaneDetailSerializer(AirplaneSerializer):
             "airplane_type",
             "rows",
             "seats_in_row",
-            "capacity"
+            "capacity",
+            "airplane_image"
         )
 
 
@@ -81,10 +89,27 @@ class CrewListSerializer(CrewSerializer):
         fields = ("id", "full_name", "position")
 
 
+class CountryImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = ("id", "country_flag")
+
+
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
         fields = ("id", "name")
+
+
+class CountryListAndRetrieveSerializer(CountrySerializer):
+    class Meta(CountrySerializer.Meta):
+        fields = CountrySerializer.Meta.fields + ("country_flag",)
+
+
+class CityImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = ("id", "city_image")
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -97,14 +122,21 @@ class CityListSerializer(CitySerializer):
     country = serializers.CharField(source="country.name", read_only=True)
 
     class Meta(CitySerializer.Meta):
-        fields = ("id", "name", "country")
+        fields = ("id", "name", "country", "city_image")
 
 
 class CityDetailSerializer(CitySerializer):
-    country = CountrySerializer(read_only=True)
+    country = CountryListAndRetrieveSerializer(read_only=True)
 
     class Meta(CitySerializer.Meta):
-        fields = ("id", "name", "country")
+        fields = ("id", "name", "country", "city_image")
+
+
+class AirportImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Airport
+        fields = ("id", "airport_image")
 
 
 class AirportSerializer(serializers.ModelSerializer):
@@ -117,14 +149,14 @@ class AirportListSerializer(AirportSerializer):
     city = serializers.StringRelatedField(read_only=True)
 
     class Meta(AirportSerializer.Meta):
-        fields = ("id", "name", "city", "iata_code")
+        fields = ("id", "name", "city", "iata_code", "airport_image")
 
 
 class AirportDetailSerializer(AirportSerializer):
     city = CityDetailSerializer(read_only=True)
 
     class Meta(AirportSerializer.Meta):
-        fields = ("id", "name", "city", "iata_code")
+        fields = ("id", "name", "city", "iata_code", "airport_image")
 
 
 class RouteSerializer(serializers.ModelSerializer):

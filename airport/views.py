@@ -1,8 +1,10 @@
 from django.db.models import Prefetch, Count, F
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from airport.filters import FlightFilter
 from airport.models import (
@@ -40,7 +42,9 @@ from airport.serializers import (
     FlightDetailSerializer,
     OrderSerializer,
     OrderListSerializer,
-    OrderDetailSerializer
+    OrderDetailSerializer,
+    AirplaneImageSerializer, CountryImageSerializer, CountryListAndRetrieveSerializer, CityImageSerializer,
+    AirportImageSerializer
 )
 
 
@@ -85,8 +89,24 @@ class AirplaneViewSet(viewsets.ModelViewSet):
             return AirplaneListSerializer
         if self.action == "retrieve":
             return AirplaneDetailSerializer
+        if self.action == "upload_image":
+            return AirplaneImageSerializer
 
         return AirplaneSerializer
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="upload-image"
+    )
+    def upload_image(self, request, pk=None):
+        airplane = self.get_object()
+        serializer = self.get_serializer(airplane, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CrewViewSet(viewsets.ModelViewSet):
@@ -123,6 +143,28 @@ class CountryViewSet(viewsets.ModelViewSet):
     search_fields = ("name",)
     ordering_fields = ("name",)
 
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return CountryListAndRetrieveSerializer
+        if self.action == "upload_image":
+            return CountryImageSerializer
+
+        return CountrySerializer
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="upload-image"
+    )
+    def upload_image(self, request, pk=None):
+        country = self.get_object()
+        serializer = self.get_serializer(country, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
@@ -151,8 +193,24 @@ class CityViewSet(viewsets.ModelViewSet):
             return CityListSerializer
         if self.action == "retrieve":
             return CityDetailSerializer
+        if self.action == "upload_image":
+            return CityImageSerializer
 
         return CitySerializer
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="upload-image"
+    )
+    def upload_image(self, request, pk=None):
+        city = self.get_object()
+        serializer = self.get_serializer(city, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AirportViewSet(viewsets.ModelViewSet):
@@ -182,8 +240,23 @@ class AirportViewSet(viewsets.ModelViewSet):
             return AirportListSerializer
         if self.action == "retrieve":
             return AirportDetailSerializer
+        if self.action == "upload_image":
+            return AirportImageSerializer
 
         return AirportSerializer
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="upload-image"
+    )
+    def upload_image(self, request, pk=None):
+        city = self.get_object()
+        serializer = self.get_serializer(city, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RouteViewSet(viewsets.ModelViewSet):
