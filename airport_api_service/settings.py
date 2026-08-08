@@ -162,6 +162,8 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
 }
 
+# spectacular
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Airport API",
     "VERSION": "1.0.0",
