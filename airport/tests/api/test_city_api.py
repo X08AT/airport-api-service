@@ -214,7 +214,11 @@ class AdminCityAPITest(TestCase):
         response = self.client.post(CITY_URL, payload)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(City.objects.filter(name="Kyiv", country=country).exists())
+        self.assertTrue(
+            City.objects.filter(
+                name="Kyiv", country=country
+            ).exists()
+        )
 
     def test_update_city(self):
         city = sample_city()

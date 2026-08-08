@@ -70,7 +70,11 @@ class AuthenticatedAirportAPITest(TestCase):
         city = sample_city()
 
         sample_airport(city=city)
-        sample_airport(name="Lviv International Airport", iata_code="LWO", city=city)
+        sample_airport(
+            name="Lviv International Airport",
+            iata_code="LWO",
+            city=city
+        )
 
         response = self.client.get(AIRPORT_URL)
 
@@ -206,8 +210,16 @@ class AuthenticatedAirportAPITest(TestCase):
         sample_airport(
             city=city, name="Boryspil International Airport", iata_code="KBP"
         )
-        sample_airport(city=city, name="Lviv International Airport", iata_code="LWO")
-        sample_airport(city=city, name="Odesa International Airport", iata_code="ODS")
+        sample_airport(
+            city=city,
+            name="Lviv International Airport",
+            iata_code="LWO"
+        )
+        sample_airport(
+            city=city,
+            name="Odesa International Airport",
+            iata_code="ODS"
+        )
 
         response = self.client.get(AIRPORT_URL, {"ordering": "name"})
 
@@ -230,8 +242,16 @@ class AuthenticatedAirportAPITest(TestCase):
         sample_airport(
             city=city, name="Boryspil International Airport", iata_code="KBP"
         )
-        sample_airport(city=city, name="Lviv International Airport", iata_code="LWO")
-        sample_airport(city=city, name="Odesa International Airport", iata_code="ODS")
+        sample_airport(
+            city=city,
+            name="Lviv International Airport",
+            iata_code="LWO"
+        )
+        sample_airport(
+            city=city,
+            name="Odesa International Airport",
+            iata_code="ODS"
+        )
 
         response = self.client.get(AIRPORT_URL, {"ordering": "-name"})
 
@@ -293,7 +313,9 @@ class AdminAirportAPITest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(
             Airport.objects.filter(
-                name="Boryspil International Airport", city=city, iata_code="KBP"
+                name="Boryspil International Airport",
+                city=city,
+                iata_code="KBP"
             ).exists()
         )
 

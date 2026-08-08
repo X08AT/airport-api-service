@@ -8,7 +8,10 @@ from rest_framework.test import APIClient
 from rest_framework.reverse import reverse
 
 from airport.models import AirplaneType, Airplane
-from airport.serializers import AirplaneListSerializer, AirplaneDetailSerializer
+from airport.serializers import (
+    AirplaneListSerializer,
+    AirplaneDetailSerializer
+)
 
 AIRPLANE_URL = reverse("airport:airplane-list")
 
@@ -56,7 +59,10 @@ class AuthenticatedAirplaneAPITest(TestCase):
     def test_airplane_list(self):
         airplane_type = sample_airplane_type()
         sample_airplane(airplane_type=airplane_type)
-        sample_airplane(registration_number="OD-PSA", airplane_type=airplane_type)
+        sample_airplane(
+            registration_number="OD-PSA",
+            airplane_type=airplane_type
+        )
         response = self.client.get(AIRPLANE_URL)
         airplanes = Airplane.objects.all()
         serializer = AirplaneListSerializer(airplanes, many=True)
@@ -142,15 +148,25 @@ class AuthenticatedAirplaneAPITest(TestCase):
         airplane_type = sample_airplane_type()
 
         sample_airplane(airplane_type=airplane_type)
-        sample_airplane(registration_number="OD-PSA", airplane_type=airplane_type)
-        sample_airplane(registration_number="OD-ASP", airplane_type=airplane_type)
+        sample_airplane(
+            registration_number="OD-PSA",
+            airplane_type=airplane_type
+        )
+        sample_airplane(
+            registration_number="OD-ASP",
+            airplane_type=airplane_type
+        )
 
-        response = self.client.get(AIRPLANE_URL, {"ordering": "registration_number"})
+        response = self.client.get(
+            AIRPLANE_URL,
+            {"ordering": "registration_number"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         registration_numbers = [
-            airplane["registration_number"] for airplane in response.data["results"]
+            airplane["registration_number"]
+            for airplane in response.data["results"]
         ]
 
         self.assertEqual(registration_numbers, ["OD-ASP", "OD-PSA", "UR-PSA"])
@@ -159,15 +175,25 @@ class AuthenticatedAirplaneAPITest(TestCase):
         airplane_type = sample_airplane_type()
 
         sample_airplane(airplane_type=airplane_type)
-        sample_airplane(registration_number="OD-PSA", airplane_type=airplane_type)
-        sample_airplane(registration_number="OD-ASP", airplane_type=airplane_type)
+        sample_airplane(
+            registration_number="OD-PSA",
+            airplane_type=airplane_type
+        )
+        sample_airplane(
+            registration_number="OD-ASP",
+            airplane_type=airplane_type
+        )
 
-        response = self.client.get(AIRPLANE_URL, {"ordering": "-registration_number"})
+        response = self.client.get(
+            AIRPLANE_URL,
+            {"ordering": "-registration_number"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         registration_numbers = [
-            airplane["registration_number"] for airplane in response.data["results"]
+            airplane["registration_number"]
+            for airplane in response.data["results"]
         ]
 
         self.assertEqual(registration_numbers, ["UR-PSA", "OD-PSA", "OD-ASP"])
@@ -180,7 +206,10 @@ class AuthenticatedAirplaneAPITest(TestCase):
             registration_number="OD-PSA", airplane_type=airplane_type2
         )
 
-        response = self.client.get(AIRPLANE_URL, {"airplane_type": airplane_type.id})
+        response = self.client.get(
+            AIRPLANE_URL,
+            {"airplane_type": airplane_type.id}
+        )
 
         serializer = AirplaneListSerializer(airplane)
         serializer2 = AirplaneListSerializer(airplane2)
@@ -210,7 +239,9 @@ class AdminAirplaneAPITest(TestCase):
         }
         response = self.client.post(AIRPLANE_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(Airplane.objects.filter(registration_number="UR-PSA").exists())
+        self.assertTrue(
+            Airplane.objects.filter(registration_number="UR-PSA").exists()
+        )
 
     def test_update_airplane(self):
         airplane = sample_airplane()
@@ -218,7 +249,10 @@ class AdminAirplaneAPITest(TestCase):
         response = self.client.patch(detail_url(airplane.id), payload)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         airplane.refresh_from_db()
-        self.assertEqual(airplane.registration_number, payload["registration_number"])
+        self.assertEqual(
+            airplane.registration_number,
+            payload["registration_number"]
+        )
 
     def test_delete_airplane(self):
         airplane = sample_airplane()
