@@ -4,7 +4,9 @@ Airport API is a RESTful API for managing airports, flights, routes, airplanes, 
 
 ## ⚙️ Installation
 
-Make sure Python 3.14 and Docker are installed.
+Make sure Docker and Docker Compose are installed.
+
+### 🐳 Docker
 
 Clone the repository:
 
@@ -55,6 +57,56 @@ The API will be available at:
 
 ```text
 http://localhost:8000/
+```
+
+### 💻 Local Development
+
+Make sure Python 3.14 is installed.
+
+Create a virtual environment:
+
+```shell
+python -m venv .venv
+```
+
+Activate the virtual environment.
+
+**Windows:**
+
+```shell
+.venv\Scripts\activate
+```
+
+**Linux/macOS:**
+
+```shell
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```shell
+pip install -r requirements.txt
+```
+
+Create a `.env` file based on `.env.example` and configure the required environment variables.
+
+Apply database migrations:
+
+```shell
+python manage.py migrate
+```
+
+Run the development server:
+
+```shell
+python manage.py runserver
+```
+
+The API will be available at:
+
+```text
+http://127.0.0.1:8000/
 ```
 
 ## 📚 API Documentation
@@ -201,10 +253,16 @@ Image upload endpoints use `multipart/form-data`.
 
 ## 🧪 Testing
 
-Run the test suite with:
+Run the test suite with Docker:
 
 ```shell
 docker compose exec app python manage.py test
+```
+
+Or run tests locally:
+
+```shell
+python manage.py test
 ```
 
 The project contains tests for models, serializers, authentication, API endpoints, validation, and image uploads.
