@@ -61,7 +61,7 @@ http://localhost:8000/
 
 ### 💻 Local Development
 
-Make sure Python 3.14 is installed.
+Make sure Python 3.14 are installed.
 
 Create a virtual environment:
 
@@ -89,7 +89,19 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Create a `.env` file based on `.env.example` and configure the required environment variables.
+Create a `.env` file based on `.env.example` and configure the database connection for local development:
+
+```env
+POSTGRES_DB=airport
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your-password
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+DJANGO_SECRET_KEY=your-secret-key
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+```
 
 Apply database migrations:
 
